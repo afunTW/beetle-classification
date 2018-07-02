@@ -1,11 +1,15 @@
 [[source]]
-url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
-
-[packages]
+url = "https://pypi.org/simple"
 
 [dev-packages]
 
 [requires]
-python_version = "3.6"
+python_version = "3.5"
+
+[packages]
+keras = "*"
+pandas = "*"
+numpy = "*"
+tensorflow-gpu = "==1.4.0"
