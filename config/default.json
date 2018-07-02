@@ -1,0 +1,14 @@
+{
+    "resnet": {
+        "lr": 1e-4,
+        "bz": 32,
+        "us": 4,
+        "fs": 3,
+        "epochs": 50,
+        "input_shape": [224, 224, 3],
+        "output_nclass": 4,
+        "output_activation": "softmax",
+        "optimizer": "Adam",
+        "_comment": ""
+    }
+}

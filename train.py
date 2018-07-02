@@ -12,68 +12,12 @@ from keras.optimizers import Adam, Nadam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import plot_model
 
-from src.core import build_transfer_model
-from src.profiling import func_profiling
-from src.estimate import get_model_memory_usage
 from src.callback import LossHistory
+from src.core import build_transfer_model
+from src.estimate import get_model_memory_usage
 from src.loss import focal_loss
 
 
-def argparser():
-    """[summary]
-
-    --pretrain-model in build mode means the path to save the checkpoint
-    --pretrain-model in load mode means the path to load th exists checkpoint
-    
-    Returns:
-        [type] -- [description]
-    """
-
-    parser = argparse.ArgumentParser(description='ResNet transfer learning for classification')
-    parser.add_argument('--gpu', dest='gpu', required=True)
-    parser.add_argument('--train', dest='train', required=True)
-    parser.add_argument('--test', dest='test', required=True)
-    parser.add_argument('--name', dest='name', default=datetime.now().strftime('%Y%m%d'))
-    
-    parser.add_argument('--lr', dest='lr', default=1e-4, type=float, help='learning rate')
-    parser.add_argument('--bz', dest='bz', default=32, type=int, help='batch size')
-    parser.add_argument('--us', dest='us', default=4, type=int, help='used stage')
-    parser.add_argument('--fs', dest='fs', default=3, type=int, help='freeze stage')
-    parser.add_argument('--output-class', dest='n_out', default=5, type=int, help='number of outpu class')
-    parser.add_argument('--output-activation', dest='out_activation', default='softmax')
-    parser.add_argument('--optimizer', dest='optimizer', choices=['Adam', 'Nadam'], default='Adam')
-    parser.add_argument('--epochs', dest='epochs', default=50, type=int)
-    parser.add_argument('--input-shape', dest='input_shape',
-                        nargs=3, default=(224, 224, 3), metavar=('height', 'width', 'channel'))
-    
-    parser.add_argument('--pretrain-model', dest='pretrain_model')
-    parser.add_argument('--build-model', dest='build', action='store_true')
-    parser.add_argument('--load-model', dest='build', action='store_false')
-    parser.set_defaults(build=True)
-    return parser
-
-def log_config(log_path, *loggers):
-    formater = logging.Formatter(
-        '%(asctime)s %(filename)12s:L%(lineno)3s [%(levelname)8s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-
-    # file handler
-    fh = logging.FileHandler(str(log_path))
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formater)
-
-    # stream handler
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setLevel(logging.INFO)
-    sh.setFormatter(formater)
-
-    for logger in loggers:
-        logger.addHandler(fh)
-        logger.addHandler(sh)
-        logger.setLevel(logging.DEBUG)
-
-@func_profiling
 def main(args, logger):
     logger.info(args)
 
