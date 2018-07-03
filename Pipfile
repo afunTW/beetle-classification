@@ -9,7 +9,9 @@ url = "https://pypi.org/simple"
 python_version = "3.5"
 
 [packages]
-keras = "*"
 pandas = "*"
 numpy = "*"
 tensorflow-gpu = "==1.4.0"
+pydot = "*"
+keras = "==2.0.8"
+pillow = "*"
