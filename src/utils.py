@@ -39,4 +39,4 @@ def func_profile(func):
             fullname, kwargs, str(cost_time)
         ))
         return result
-    return wrapper
+    return wrapped
