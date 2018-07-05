@@ -74,5 +74,8 @@ class ResNet(object):
         model = self._pretrain_model
         model = ResNet50(**self._keras_config) if not model and self._keras_config else ResNet50()
         x = self._extract_layer(model)
+        x = Dense(256)(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = Activation('relu')(x)
         out_layer = Dense(self._output_nclass, activation=self._output_activation, name='out')(x)
         self.model = Model(inputs=[model.input], outputs=[out_layer])
