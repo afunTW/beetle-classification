@@ -4,7 +4,7 @@
         "bz": 32,
         "us": 4,
         "fs": 3,
-        "epochs": 50,
+        "epochs": 1000,
         "output_nclass": 4,
         "output_activation": "softmax",
         "optimizer": "Adam",

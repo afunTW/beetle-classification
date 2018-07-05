@@ -1,110 +1,136 @@
+"""[summary]
+
+usage: python3 train.py \
+--gpus 1 \
+--train data/train \
+--test data/val \
+--name test \
+--config config/default.json \
+--backend resnet \
+--ouput-structure \
+--comment "test trainable model"
+
+Returns:
+    outputs/README.txt - records the experiment name and detail comments
+    outputs/[name] - included log, model, images
+"""
 import argparse
+import json
 import logging
-import sys
+import os
 from datetime import datetime
 from pathlib import Path
-from pprint import pprint
 
 import pandas as pd
-from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from keras.models import load_model
-from keras.optimizers import Adam, Nadam
+from keras import backend as K
+from keras.callbacks import (EarlyStopping, ModelCheckpoint, ReduceLROnPlateau,
+                             TensorBoard)
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import plot_model
-
-from src.callback import LossHistory
-from src.core import build_transfer_model
 from src.estimate import get_model_memory_usage
 from src.loss import focal_loss
+from src.models import get_model, get_optimizer
+from src.utils import func_profile, log_handler
 
+LOGGER = logging.getLogger(__name__)
+LOGGERS = [
+    LOGGER,
+    logging.getLogger('src.utils')
+]
 
-def main(args, logger):
-    logger.info(args)
+def argparser():
+    """[summary]
 
-    # set up
-    logdir = Path('logs')
-    if not logdir.exists():
-        logdir.mkdir(parents=True)
-    log_path = logdir / '{}.log'.format(args.name)
-    log_config(log_path, logger)
+    --pretrain-model in build mode means the path to save the checkpoint
+    --pretrain-model in load mode means the path to load th exists checkpoint
+    
+    Returns:
+        [type] -- [description]
+    """
 
+    parser = argparse.ArgumentParser(description='ResNet transfer learning for classification')
+    parser.add_argument('--gpus', dest='gpus', required=True)
+    parser.add_argument('--train', dest='train', required=True)
+    parser.add_argument('--test', dest='test', required=True)
+    parser.add_argument('--name', dest='name', default=datetime.now().strftime('%Y%m%d'))
+    parser.add_argument('--config', dest='config', default='config/default.json', required=True)
+    parser.add_argument('--backend', dest='backend')
+    parser.add_argument('--comment', dest='comment', default='test')
+    parser.add_argument('--ouput-structure', dest='outimg', action='store_true')
+    parser.set_defaults(outimg=False)
+    return parser
+
+@func_profile
+def main(args):
+    # preprocess
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
     outdir = Path('outputs') / args.name
     if not outdir.exists():
         outdir.mkdir(parents=True)
+    log_handler(*LOGGERS, logname=str(outdir / 'log.txt'))
 
-    # build or load model
-    resnet = None
-    if args.build:
-        if args.pretrain_model:
-            resnet = build_transfer_model(args.us, args.fs,
-                                          n_out=args.n_out,
-                                          out_activation=args.out_activation,
-                                          model=args.pretrain_model)
-            logger.info('Transfer from pretrain model')
-        else:    
-            resnet = build_transfer_model(args.us, args.fs,
-                                          n_out=args.n_out,
-                                          out_activation=args.out_activation,
-                                          include_top=False,
-                                          weights='imagenet',
-                                          input_shape=args.input_shape)
-            logger.info('Transfer from keras.applications.resnet50 model')
-    else:
-        assert Path(args.pretrain_model).exists()
-        resnet = load_model(args.pretrain_model)
-        logger.info('Load model {}'.format(args.pretrain_model))
+    with open(str(outdir.parent / 'README.txt'), 'a+') as f:
+        f.write('{}\t-\t{}\n'.format(args.name, args.comment))
+    if Path(args.config).exists():
+        with open(args.config, 'r') as f:
+            config = json.load(f)
+    LOGGER.info(args)
+    
+    # build and compile model
+    K.clear_session()
+    model = get_model(args, config)
+    optimizer = get_optimizer(config[args.backend]['optimizer'], lr=config[args.backend]['lr'])
+    loss = focal_loss(gamma=2, alpha=2)
+    model.model.compile(loss=[loss], optimizer=optimizer, metrics=[config[args.backend]['metrics']])
+    estimate_gbytes = get_model_memory_usage(config[args.backend]['bz'], model.model)
+    model.model.summary(print_fn=lambda x: LOGGER.info(x + '\n'))
+    LOGGER.info('Estimate model required {} gbytes GPU memory'.format(estimate_gbytes))
 
-    optimizer = {'Adam': Adam(lr=args.lr), 'Nadam': Nadam(lr=args.lr)}.get(args.optimizer, None)
-    resnet.compile(loss=[focal_loss(gamma=2, alpha=2)], optimizer=optimizer, metrics=['accuracy'])
-    estimate_gbytes = get_model_memory_usage(args.bz, resnet)
-    plot_model(resnet, to_file=str(outdir / 'model_structure.jpg'))
-    logger.info('optimizer = {}'.format(optimizer.__class__.__name__))
-    logger.info('Save - {}'.format(str(outdir / 'model_structure.jpg')))
-    logger.info('Estimate model required {} gbytes GPU memory'.format(estimate_gbytes))
-    logger.info(resnet.summary())
-
-    # preprocess
-    h, w, channel = args.input_shape
+    # preprocess generator
+    _data_gen_params = {
+        'target_size': config[args.backend]['keras']['input_shape'][:2],
+        'batch_size': config[args.backend]['bz'],
+        'class_mode': 'categorical',
+        'shuffle': True
+    }
     count_train_data = len(list(Path(args.train).glob('**/*')))
     count_test_data = len(list(Path(args.test).glob('**/*')))
-    logger.info('Got {} training data, {} testing data'.format(count_train_data, count_test_data))
-    train_datagen = ImageDataGenerator(rescale=1./255,
-                                       shear_range=0.2,
-                                       zoom_range=0.2,
-                                       featurewise_center=False,
-                                       horizontal_flip=True,
-                                       vertical_flip=True)
-    test_datagen = ImageDataGenerator(rescale=1./255)
-    train_generator = train_datagen.flow_from_directory(args.train,
-                                                        target_size=(h, w),
-                                                        batch_size=args.bz,
-                                                        class_mode='categorical',
-                                                        shuffle=True)
-    test_generator = test_datagen.flow_from_directory(args.test,
-                                                      target_size=(h, w),
-                                                      batch_size=args.bz,
-                                                      class_mode='categorical',
-                                                      shuffle=True)
-    model_name = outdir / 'resnet_bz{}_us{}_fs{}_{}.h5'.format(
-        args.bz, args.us, args.fs, optimizer.__class__.__name__
-    )
-    checkpoint = ModelCheckpoint(model_name, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+    train_data_aug = ImageDataGenerator(**config[args.backend]['imgaug']['train'])
+    test_data_aug = ImageDataGenerator(**config[args.backend]['imgaug']['test'])
+    train_data_gen = train_data_aug.flow_from_directory(args.train, **_data_gen_params)
+    test_data_gen = test_data_aug.flow_from_directory(args.test, **_data_gen_params)
+    LOGGER.info('Complete generator preprocess with {} traing data and {} test data'.format(
+        count_train_data, count_test_data
+    ))
+
+    # callbacks
+    model_savepath = str(outdir / '{}.h5'.format(args.backend))
+    checkpoint = ModelCheckpoint(model_savepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=25, verbose=1, mode='auto')
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.8, patience=5, min_lr=1e-10, verbose=1)
-    loss_history = LossHistory()
+    reducelr = ReduceLROnPlateau(monitor='val_loss', factor=0.8, patience=5, min_lr=1e-10, verbose=1)
+    tensorboard = TensorBoard(log_dir=str(outdir / 'tensorboard'),
+                            #   histogram_freq=1,
+                            #   write_grads=True,
+                              write_images=True,
+                              write_graph=False)
+    LOGGER.info('Complete callbacks declarement')
 
     # train
-    history = resnet.fit_generator(train_generator,
-                                   steps_per_epoch=count_train_data // args.bz,
-                                   epochs=args.epochs,
-                                   validation_data=test_generator,
-                                   validation_steps=count_test_data // args.bz,
-                                   callbacks=[checkpoint, earlystop, reduce_lr, loss_history])
-    history_record = history.history
-    history_dataframe = pd.DataFrame(history_record)
+    history = model.model.fit_generator(train_data_gen,
+                                        steps_per_epoch=count_train_data // config[args.backend]['bz'],
+                                        epochs=config[args.backend]['epochs'],
+                                        validation_data=test_data_gen,
+                                        validation_steps=count_test_data // config[args.backend]['bz'],
+                                        callbacks=[checkpoint, earlystop, reducelr, tensorboard])
+    
+    # save model config
+    history_dataframe = pd.DataFrame(history.history)
     history_dataframe.to_csv(str(outdir / 'history.csv'), index=False)
+    if args.outimg:
+        plot_model(model.model, to_file=str(outdir / 'model_structure.jpg'))
+    with open(str(outdir / 'config.json'), 'w+') as f:
+        json.dump(model.config, f, indent=4)
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
     parser = argparser()
-    main(parser.parse_args(), logger)
+    main(parser.parse_args())
