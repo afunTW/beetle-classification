@@ -52,6 +52,8 @@ def main(args):
 
         # predict
         y_pred = model.predict(X_test)
+        savepath_y_pred = str(Path(model_path).with_name('y_pred.npy'))
+        np.save(savepath_y_pred, y_pred)
 
         # metrics
         accuracy = top_n_accuracy(y_pred, y_true, 1)
@@ -61,10 +63,11 @@ def main(args):
                               classes=list('OX=A'),
                               to_img=savepath_cnf_matrix,
                               normalize=True,
-                              title='Confusion matrix (acc={:2f})'.format(accuracy))
+                              title='Confusion matrix (acc={:.4f})'.format(accuracy))
         logger.info('model: {}'.format(model_path))
         logger.info(' - top-1-accuracy: {:.4f}'.format(accuracy))
         logger.info(' - save confusion matrix at {}'.format(savepath_cnf_matrix))
+        logger.info(' - save y_pred at {}'.format(savepath_y_pred))
         print(classification_report(y_true.argmax(axis=1),
                                     y_pred.argmax(axis=1),
                                     target_names=list('OX=A')))
