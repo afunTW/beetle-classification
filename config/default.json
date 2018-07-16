@@ -1,9 +1,9 @@
 {
     "resnet": {
         "lr": 1e-4,
-        "bz": 32,
+        "bz": 64,
         "us": 4,
-        "fs": 3,
+        "fs": 0,
         "epochs": 1000,
         "output_nclass": 4,
         "output_activation": "softmax",
@@ -14,19 +14,34 @@
             "weights": "imagenet",
             "input_shape": [224, 224, 3]
         },
-        "imgaug": {
-            "train": {
-                "rescale": 0.00392156862745098,
-                "shear_range": 0.2,
-                "zoom_range": 0.2,
-                "featurewise_center": true,
-                "horizontal_flip": true,
-                "vertical_flip": true
-            },
-            "test": {
-                "rescale": 0.00392156862745098
-            }
+        "_comment": ""
+    },
+    "xception": {
+        "lr": 1e-4,
+        "bz": 16,
+        "epochs": 1000,
+        "output_nclass": 4,
+        "output_activation": "softmax",
+        "optimizer": "Adam",
+        "metrics": "accuracy",
+        "keras": {
+            "include_top": false,
+            "weights": "imagenet",
+            "input_shape": [299, 299, 3]
         },
         "_comment": ""
+    },
+    "imgaug": {
+        "train": {
+            "rescale": 0.00392156862745098,
+            "shear_range": 0.2,
+            "zoom_range": 0.2,
+            "featurewise_center": true,
+            "horizontal_flip": true,
+            "vertical_flip": true
+        },
+        "test": {
+            "rescale": 0.00392156862745098
+        }
     }
 }
