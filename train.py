@@ -26,7 +26,7 @@ from keras import backend as K
 from keras.callbacks import (EarlyStopping, ModelCheckpoint, ReduceLROnPlateau,
                              TensorBoard)
 from keras.preprocessing.image import ImageDataGenerator
-from keras.utils import plot_model
+from keras.utils import plot_model, multi_gpu_model
 from src.estimate import get_model_memory_usage
 from src.loss import focal_loss
 from src.models import get_model, get_optimizer
@@ -49,7 +49,7 @@ def argparser():
     """
 
     parser = argparse.ArgumentParser(description='ResNet transfer learning for classification')
-    parser.add_argument('--gpus', dest='gpus', required=True)
+    parser.add_argument('--gpus', dest='gpus', required=True, nargs='+')
     parser.add_argument('--train', dest='train', required=True)
     parser.add_argument('--test', dest='test', required=True)
     parser.add_argument('--name', dest='name', default=datetime.now().strftime('%Y%m%d'))
@@ -63,7 +63,7 @@ def argparser():
 @func_profile
 def main(args):
     # preprocess
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
+    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(args.gpus)
     outdir = Path('outputs') / args.name
     if not outdir.exists():
         outdir.mkdir(parents=True)
@@ -79,6 +79,7 @@ def main(args):
     # build and compile model
     K.clear_session()
     model = get_model(args, config)
+    model.model = multi_gpu_model(model.model, gpus=len(args.gpus)) if len(args.gpus) > 1 else model.model
     optimizer = get_optimizer(config[args.backend]['optimizer'], lr=config[args.backend]['lr'])
     loss = focal_loss(gamma=2, alpha=2)
     model.model.compile(loss=[loss], optimizer=optimizer, metrics=[config[args.backend]['metrics']])
@@ -95,8 +96,8 @@ def main(args):
     }
     count_train_data = len(list(Path(args.train).glob('**/*')))
     count_test_data = len(list(Path(args.test).glob('**/*')))
-    train_data_aug = ImageDataGenerator(**config[args.backend]['imgaug']['train'])
-    test_data_aug = ImageDataGenerator(**config[args.backend]['imgaug']['test'])
+    train_data_aug = ImageDataGenerator(**config['imgaug']['train'])
+    test_data_aug = ImageDataGenerator(**config['imgaug']['test'])
     train_data_gen = train_data_aug.flow_from_directory(args.train, **_data_gen_params)
     test_data_gen = test_data_aug.flow_from_directory(args.test, **_data_gen_params)
     LOGGER.info('Complete generator preprocess with {} traing data and {} test data'.format(
