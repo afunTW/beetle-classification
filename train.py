@@ -31,6 +31,7 @@ from src.estimate import get_model_memory_usage
 from src.loss import focal_loss
 from src.models import get_model, get_optimizer
 from src.utils import func_profile, log_handler
+from src.preprocess import normalize_generator
 
 LOGGER = logging.getLogger(__name__)
 LOGGERS = [
@@ -56,7 +57,7 @@ def argparser():
     parser.add_argument('--config', dest='config', default='config/default.json', required=True)
     parser.add_argument('--backend', dest='backend')
     parser.add_argument('--comment', dest='comment', default='test')
-    parser.add_argument('--ouput-structure', dest='outimg', action='store_true')
+    parser.add_argument('--output-structure', dest='outimg', action='store_true')
     parser.set_defaults(outimg=False)
     return parser
 
@@ -98,8 +99,10 @@ def main(args):
     count_test_data = len(list(Path(args.test).glob('**/*')))
     train_data_aug = ImageDataGenerator(**config['imgaug']['train'])
     test_data_aug = ImageDataGenerator(**config['imgaug']['test'])
-    train_data_gen = train_data_aug.flow_from_directory(args.train, **_data_gen_params)
-    test_data_gen = test_data_aug.flow_from_directory(args.test, **_data_gen_params)
+    train_batch = train_data_aug.flow_from_directory(args.train, **_data_gen_params)
+    test_batch = test_data_aug.flow_from_directory(args.test, **_data_gen_params)
+    train_data_gen = normalize_generator(train_batch, args.backend)
+    test_data_gen = normalize_generator(test_batch, args.backend)
     LOGGER.info('Complete generator preprocess with {} traing data and {} test data'.format(
         count_train_data, count_test_data
     ))
@@ -110,8 +113,7 @@ def main(args):
     earlystop = EarlyStopping(monitor='val_loss', min_delta=0, patience=25, verbose=1, mode='auto')
     reducelr = ReduceLROnPlateau(monitor='val_loss', factor=0.8, patience=5, min_lr=1e-10, verbose=1)
     tensorboard = TensorBoard(log_dir=str(outdir / 'tensorboard'),
-                            #   histogram_freq=1,
-                            #   write_grads=True,
+                              write_grads=True,
                               write_images=True,
                               write_graph=False)
     LOGGER.info('Complete callbacks declarement')
