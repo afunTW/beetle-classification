@@ -21,6 +21,7 @@ def argparser():
     parser.add_argument('--gpus', dest='gpus', required=True)
     parser.add_argument('--models', dest='models', required=True, nargs='+')
     parser.add_argument('--test', dest='test', default='data/test')
+    parser.add_argument('--input-shape', dest='input_shape', nargs=2, metavar=('height', 'width'), default=(224, 224), type=int)
     parser.add_argument('--focal-loss', dest='focal_loss', action='store_true')
     parser.add_argument('--no-focal-loss', dest='focal_loss', action='store_false')
     parser.set_defaults(focal_loss=True)
@@ -38,7 +39,7 @@ def main(args):
     y_true = [path.parent.name for path in X_test]
     y_true = list(map(int, y_true))
     y_true = np_utils.to_categorical(y_true)
-    X_test = np.array([np.array(Image.open(i).resize((224, 224)), dtype='float32') for i in X_test])
+    X_test = np.array([np.array(Image.open(i).resize(args.input_shape), dtype='float32') for i in X_test])
     X_test = X_test / 255
     logger.info('X_test shape={}, Y_test shape={}'.format(X_test.shape, y_true.shape))
 
