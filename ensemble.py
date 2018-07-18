@@ -56,7 +56,7 @@ def main(args):
                 accuracy = accuracy_score(local_y_pred, y_true, 1)
                 if _checkpoint[1] < accuracy:
                     _checkpoint = (combine_set, accuracy)
-            LOGGER.info('Limit length {} - best combination={}, acc={:.4f}'.format(
+            print('Limit len {:02d} - combination={}, acc={:.4f}'.format(
                 combine_length, sorted(map(lambda x: x.split('/')[1], _checkpoint[0])), _checkpoint[1]
             ))
     else:
