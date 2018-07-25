@@ -2,8 +2,10 @@ import logging
 from datetime import datetime
 
 from keras.applications.xception import Xception
-from keras.layers import GlobalAveragePooling2D
+from keras.layers import Activation
+from keras.layers import BatchNormalization
 from keras.layers import Dense
+from keras.layers import GlobalAveragePooling2D
 from keras.models import Model
 from src.models.model import TransferModel
 

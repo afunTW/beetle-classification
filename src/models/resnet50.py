@@ -66,18 +66,10 @@ class ResNetTransfer(TransferModel):
             model = ResNet50(**self._keras_config) if self._keras_config else ResNet50()
         x = self._extract_layer(model)
 
-        # x = Conv2D(512, (1, 1))(x)
-        # x = BatchNormalization(axis=-1)(x)
-
-        # x = Conv2D(128, (1, 1))(x)
-        # x = BatchNormalization(axis=-1)(x)
-
-        # x = Flatten()(x)
-
         x = Dense(512)(x)
         x = BatchNormalization(axis=-1)(x)
         x = Activation('relu')(x)
-        
+
         x = Dense(256)(x)
         x = BatchNormalization(axis=-1)(x)
         x = Activation('relu')(x)
