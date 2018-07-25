@@ -24,13 +24,5 @@ class InceptionResNetV2Transfer(TransferModel):
         x = model.layers[-1].output
         x = GlobalAveragePooling2D()(x)
 
-        x = Dense(512)(x)
-        x = BatchNormalization(axis=-1)(x)
-        x = Activation('relu')(x)
-
-        x = Dense(128)(x)
-        x = BatchNormalization(axis=-1)(x)
-        x = Activation('relu')(x)
-
         out_layer = Dense(self._output_nclass, activation=self._output_activation, name='out')(x)
         self.model = Model(inputs=[model.input], outputs=[out_layer])

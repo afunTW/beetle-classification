@@ -31,9 +31,23 @@
         },
         "_comment": ""
     },
+    "inception_resnet_v2": {
+        "lr": 1e-4,
+        "bz": 16,
+        "epochs": 1000,
+        "output_nclass": 4,
+        "output_activation": "softmax",
+        "optimizer": "Adam",
+        "metrics": "accuracy",
+        "keras": {
+            "include_top": false,
+            "weights": "imagenet",
+            "input_shape": [299, 299, 3]
+        },
+        "_comment": ""
+    },
     "imgaug": {
         "train": {
-            "rescale": 0.00392156862745098,
             "shear_range": 0.2,
             "zoom_range": 0.2,
             "featurewise_center": true,
@@ -41,7 +55,6 @@
             "vertical_flip": true
         },
         "test": {
-            "rescale": 0.00392156862745098
         }
     }
 }
