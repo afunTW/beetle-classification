@@ -70,8 +70,6 @@ def main(args):
         outdir.mkdir(parents=True)
     log_handler(*LOGGERS, logname=str(outdir / 'log.txt'))
 
-    with open(str(outdir.parent / 'README.txt'), 'a+') as f:
-        f.write('{}\t-\t{}\n'.format(args.name, args.comment))
     if Path(args.config).exists():
         with open(args.config, 'r') as f:
             config = json.load(f)
@@ -101,8 +99,8 @@ def main(args):
     test_data_aug = ImageDataGenerator(**config['imgaug']['test'])
     train_batch = train_data_aug.flow_from_directory(args.train, **_data_gen_params)
     test_batch = test_data_aug.flow_from_directory(args.test, **_data_gen_params)
-    train_data_gen = normalize_generator(train_batch, args.backend)
-    test_data_gen = normalize_generator(test_batch, args.backend)
+    train_data_gen = normalize_generator(train_batch)
+    test_data_gen = normalize_generator(test_batch)
     LOGGER.info('Complete generator preprocess with {} traing data and {} test data'.format(
         count_train_data, count_test_data
     ))
@@ -129,10 +127,14 @@ def main(args):
     # save model config
     history_dataframe = pd.DataFrame(history.history)
     history_dataframe.to_csv(str(outdir / 'history.csv'), index=False)
+    record_config = model.config
+    record_config['imgaug'] = config['imgaug']
     if args.outimg:
         plot_model(model.model, to_file=str(outdir / 'model_structure.jpg'))
+    with open(str(outdir.parent / 'README.txt'), 'a+') as f:
+        f.write('{}\t-\t{}\n'.format(args.name, args.comment))
     with open(str(outdir / 'config.json'), 'w+') as f:
-        json.dump(model.config, f, indent=4)
+        json.dump(record_config, f, indent=4)
 
 if __name__ == '__main__':
     parser = argparser()
