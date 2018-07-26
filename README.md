@@ -1,8 +1,6 @@
 # keras-transfer-workflow
 
-This project is motivated by quick invoke the transfer learning model with my own code convention.
-
-You can invoke these following model from keras
+This project is motivated by quick invoke the transfer learning model with my own code convention. It's available to invoke these following model from keras
 
 - `ResNet50`
 - `Xception`
@@ -23,7 +21,7 @@ $ pipenv sync
 
 Note that `pipenv shell` will load the Pipfile to build and enter the virtaulenv with the same python version defined in Pipfile.
 
-If you don't have proper python version in your system, refer to [pyenv](https://github.com/pyenv/pyenv) and install the right version. Then run the `pipenv --python <path/to/python>` command to create the virtualenv.
+If you don't have proper python version in your system, refer to [pyenv](https://github.com/pyenv/pyenv) and install the right version with the `pipenv --python <path/to/python>` command to create the virtualenv.
 
 ## Training
 
@@ -40,13 +38,13 @@ $ BETTER_EXCEPTIONS=1 python3 train.py \
 --comment "demo the transfer learning with resnet50 backend"
 ```
 
-> note: train/ val data save in the following file structure `train/0`, `train/1/`, `train/2`, `train/3`, which the interger is the multiclass index
+> note: train/ val data save in the following file structure `train/0`, `train/1/`, `train/2`, `train/3`, which the integer is the multiclass index
 
 If you are going to check the `train.py`, there are some detail to know.
 
 - custom loss `focal_loss`, check the `src/loss.py`
 - available to extend the keras ImageDataGenerator, check the `src/preprocess.py`
-- use tensorboard to visulaize
+- use tensorboard to visualize
 
 ### Get the data after training
 
@@ -59,7 +57,7 @@ According to the `--name` you provided in python script, that will create a new 
     - model structure
     - model estimation for required GPU memory
     - total training time
-- `<--backend>.h5` is the model checkpoint
+- `<backend>.h5` is the model checkpoint
 - `tensorboard/` record some file for running tensorboard
 
 ## Evaluate
@@ -116,6 +114,19 @@ Limit len 02 - combination=['test09', 'test17'], acc=0.9635
 Limit len 03 - combination=['test09', 'test14', 'test17'], acc=0.9683
 Limit len 04 - combination=['test03', 'test09', 'test14', 'test17'], acc=0.9675
 ...
+```
+
+## Tensorboard
+
+Visualize the progress of your experiment.
+
+```
+# e.g. </path/to/tensorboard> = output/test/tensorboard
+$ tensorboard --logdir output/test/tensorboard/
+
+# if you running tensorboard on server, you can check the tensorboard on local by setting ssh tunel
+$ ssh -NfL 6006:localhost:6006 username@server
+# open localhost:6006 in your local browser
 ```
 
 ## Reference
