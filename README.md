@@ -1,4 +1,4 @@
-****# keras-transfer-workflow
+# keras-transfer-workflow
 
 This project is motivated by quick invoke the transfer learning model with my own code convention.
 
