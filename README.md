@@ -40,7 +40,7 @@ $ BETTER_EXCEPTIONS=1 python3 train.py \
 
 > note: train/ val data save in the following file structure `train/0`, `train/1/`, `train/2`, `train/3`, which the integer is the multiclass index
 
-If you are going to check the `train.py`, there are some detail to know.
+If you are going to check the `train.py`, there is some detail to know.
 
 - custom loss `focal_loss`, check the `src/loss.py`
 - available to extend the keras ImageDataGenerator, check the `src/preprocess.py`
@@ -48,9 +48,9 @@ If you are going to check the `train.py`, there are some detail to know.
 
 ### Get the data after training
 
-According to the `--name` you provided in python script, that will create a new folder `output/<name>` and it will contain the following files
+According to the `--name` you provided in the python script, that will create a new folder `output/<name>` and it will contain the following files
 
-- `config.json` record the paramter you set in `config/`
+- `config.json` record the parameter you set in `config/`
 - `history.csv` record some value during training model
 - `log.txt` record all message during training
     - python script paramters
@@ -62,7 +62,7 @@ According to the `--name` you provided in python script, that will create a new 
 
 ## Evaluate
 
-Remember that the models we implement has different default input shape. Because of the image preprocessing and resizing, it's better to evaluate the same input shape model at the same time.
+Remember that the models we implement have different default input shape. Because of the image preprocessing and resizing, it's better to evaluate the same input shape model at the same time.
 
 - ResNet `(224 224 3)` in `HWC`
 - Xception `(299 299 3)` in `HWC`
@@ -79,13 +79,13 @@ $ BETTER_EXCEPTIONS=1 python3 evaluate.py \
 
 > note: If you use the custom loss, you have to invoke the same loss function when you load model
 
-After the evaluation, process will generate y_pred.npy under the folder for each model we provided. Besides, the multiclass output will generate the `confusion_matrix.jpg`
+After the evaluation, a process will generate y_pred.npy under the folder for each model we provided. Besides, the multiclass output will generate the `confusion_matrix.jpg`
 
 ![confusion_matrix.jpg](./confusion_matrix.jpg)
 
 ## Ensemble
 
-In order to imporve the performance and enhanced the robustness, we can simply ensemble differnet model to predict the same target. There are different ensemble methods like boosting and stacking, but we simply apply the averaging and voting for the test output. Therefore, we have to run the `evaluate.py` script to generate `y_pred.npy` first, then run the `ensemble.py` to test if the performance rise.
+In order to improve the performance and enhanced the robustness, we can simply ensemble different model to predict the same target. There are different ensemble methods like boosting and stacking, but we simply apply the averaging and voting for the test output. Therefore, we have to run the `evaluate.py` script to generate `y_pred.npy` first, then run the `ensemble.py` to test if the performance rise.
 
 ```
 # ensemble the given models
@@ -124,7 +124,7 @@ Visualize the progress of your experiment.
 # e.g. </path/to/tensorboard> = output/test/tensorboard
 $ tensorboard --logdir output/test/tensorboard/
 
-# if you running tensorboard on server, you can check the tensorboard on local by setting ssh tunel
+# if you running tensorboard on a server, you can check the tensorboard on local by setting ssh tunnel
 $ ssh -NfL 6006:localhost:6006 username@server
 # open localhost:6006 in your local browser
 ```
@@ -132,6 +132,4 @@ $ ssh -NfL 6006:localhost:6006 username@server
 ## Reference
 
 - [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
-- [Xception: Deep Learning with Depthwise Separable Convolutions](https://arxiv.org/abs/1610.02357)
-- [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261)
-- [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+- [Xception: Deep Learning with Depthwise Separable Convo
