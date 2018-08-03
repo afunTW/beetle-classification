@@ -132,4 +132,6 @@ $ ssh -NfL 6006:localhost:6006 username@server
 ## Reference
 
 - [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
-- [Xception: Deep Learning with Depthwise Separable Convo
+- [Xception: Deep Learning with Depthwise Separable Convolutions](https://arxiv.org/abs/1610.02357)
+- [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261)
+- [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
